@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stop Gap — Transit Accessibility Barriers</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullPage.js/4.0.20/fullpage.min.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fullPage.js/4.0.20/fullpage.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; color: #333; }
+
+    /* ── Section base ── */
+    .section { position: relative; }
+
+    /* ── Hero ── */
+    .hero { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); color: #fff; }
+    .hero h1 { font-size: 72px; font-weight: 800; letter-spacing: -2px; margin-bottom: 16px; }
+    .hero h1 span { color: #f59e0b; }
+    .hero .tagline { font-size: 22px; color: #94a3b8; max-width: 600px; line-height: 1.5; }
+    .hero .scroll-hint { position: absolute; bottom: 40px; font-size: 13px; color: #64748b; letter-spacing: 1px; text-transform: uppercase; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+    /* ── Data section ── */
+    .data-section { display: flex; align-items: center; justify-content: center; background: #f8fafc; }
+    .data-inner { max-width: 1000px; padding: 0 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .data-text h2 { font-size: 36px; font-weight: 700; color: #0f172a; margin-bottom: 16px; }
+    .data-text p { font-size: 16px; color: #475569; line-height: 1.7; margin-bottom: 12px; }
+    .data-cards { display: flex; flex-direction: column; gap: 16px; }
+    .data-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px 24px; }
+    .data-card .dc-title { font-size: 14px; font-weight: 600; color: #0f172a; margin-bottom: 4px; }
+    .data-card .dc-desc { font-size: 13px; color: #64748b; line-height: 1.4; }
+    .data-card .dc-stat { font-size: 28px; font-weight: 700; color: #2563eb; margin-top: 4px; }
+
+    /* ── How-to section ── */
+    .how-to-section { display: flex; align-items: center; justify-content: center; background: #fff; }
+    .howto-inner { max-width: 900px; padding: 0 40px; }
+    .howto-inner h2 { font-size: 36px; font-weight: 700; color: #0f172a; margin-bottom: 8px; text-align: center; }
+    .howto-subtitle { font-size: 16px; color: #64748b; text-align: center; margin-bottom: 36px; }
+    .howto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .howto-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; }
+    .howto-icon { font-size: 28px; margin-bottom: 10px; }
+    .howto-title { font-size: 16px; font-weight: 600; color: #0f172a; margin-bottom: 6px; }
+    .howto-desc { font-size: 14px; color: #475569; line-height: 1.6; }
+    .howto-desc b { color: #0f172a; }
+
+    /* ── Dashboard section ── */
+    .dashboard-section { background: #f5f6f8; overflow: hidden; }
+    .dashboard-inner { width: 100%; height: 100%; display: flex; flex-direction: column; }
+
+    .dash-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 24px; background: #fff; border-bottom: 1px solid #e0e0e0; flex-shrink: 0; }
+    .dash-header h2 { font-size: 16px; font-weight: 600; color: #0f172a; }
+    .filters { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .filter-group { display: flex; align-items: center; gap: 5px; }
+    .filter-group label { font-size: 12px; color: #555; white-space: nowrap; }
+    .filter-group input[type=range] { width: 80px; accent-color: #2563eb; }
+    .filter-group .value { font-size: 12px; color: #2563eb; font-weight: 600; min-width: 14px; }
+    .filter-group select { padding: 3px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; background: #fff; color: #333; }
+
+    .dash-body { display: flex; flex: 1; min-height: 0; gap: 12px; padding: 12px 24px; }
+
+    .map-column { width: 38%; flex-shrink: 0; display: flex; flex-direction: column; }
+    .map-column .panel { flex: 1; }
+
+    .right-column { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; flex-shrink: 0; }
+    .kpi { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px; text-align: center; }
+    .kpi .label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi .number { font-size: 24px; font-weight: 700; color: #1a1a1a; margin-top: 2px; }
+    .kpi .number.highlight { color: #dc2626; }
+
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; flex: 1; min-height: 0; }
+
+    .panel { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .panel-title { font-size: 13px; font-weight: 600; padding: 8px 12px 6px; color: #1a1a1a; border-bottom: 1px solid #e0e0e0; flex-shrink: 0; }
+
+    #map { flex: 1; min-height: 0; width: 100%; background: #eef2f6; }
+    .chart-container { padding: 0; flex: 1; overflow: hidden; min-width: 0; min-height: 0; }
+    .chart-container svg { display: block; max-width: 100%; max-height: 100%; }
+
+    .rank-list { padding: 10px 14px; flex: 1; overflow: auto; }
+    .rank-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+    .rank-item:last-child { border-bottom: none; }
+    .rank-num { font-size: 18px; font-weight: 700; color: #8b5cf6; min-width: 22px; line-height: 1; }
+    .rank-info { flex: 1; }
+    .rank-name { font-size: 14px; font-weight: 600; color: #0f172a; line-height: 1.2; }
+    .rank-stats { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .rank-stats b { color: #475569; }
+
+    .leaflet-tooltip { background: #fff; color: #333; border-radius: 8px; font-size: 13px; line-height: 1.5; padding: 8px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 1px solid #e0e0e0; }
+    .leaflet-tooltip b { color: #1a1a1a; }
+
+    .legend { padding: 8px 16px; display: flex; align-items: center; gap: 10px; font-size: 11px; color: #666; flex-shrink: 0; }
+    .legend-gradient { width: 120px; height: 10px; border-radius: 3px; }
+    .tab-bar { display: flex; border-bottom: 1px solid #e0e0e0; flex-shrink: 0; }
+    .tab { flex: 1; text-align: center; padding: 8px 16px; font-size: 12px; color: #888; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .tab:hover { color: #555; }
+    .tab.active { color: #2563eb; border-bottom-color: #2563eb; }
+
+    /* ── Guided Explorations carousel ── */
+    .carousel-wrapper { flex: 1; display: flex; align-items: stretch; min-height: 0; position: relative; }
+    .ep-arrow { flex: 1 1 0; min-width: 36px; border: none; background: none; color: #cbd5e1; cursor: pointer; display: flex; align-items: center; font-size: 36px; font-weight: 300; line-height: 1; transition: color 0.2s; padding: 0; }
+    .ep-arrow:first-child { justify-content: center; }
+    .ep-arrow:last-child { justify-content: center; }
+    .ep-arrow:hover { color: #2563eb; }
+    .ep-arrow:active { color: #1d4ed8; }
+    .carousel-body { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 0; min-height: 0; overflow: hidden; }
+    .carousel-card { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; animation: fadeSlide 0.25s ease; }
+    @keyframes fadeSlide { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    .carousel-card .cc-icon { font-size: 28px; line-height: 1; }
+    .carousel-card .cc-title { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .carousel-card .cc-stat { font-size: 36px; font-weight: 800; color: #2563eb; line-height: 1.1; }
+    .carousel-card.is-active .cc-stat { color: #16a34a; }
+    .carousel-card .cc-desc { font-size: 12px; color: #64748b; line-height: 1.4; max-width: 220px; }
+    .cc-apply { margin-top: 6px; padding: 6px 20px; border-radius: 6px; border: 1.5px solid #2563eb; background: #2563eb; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; }
+    .cc-apply:hover { background: #1d4ed8; }
+    .cc-apply.applied { background: #fff; color: #dc2626; border-color: #fca5a5; }
+    .cc-apply.applied:hover { background: #fef2f2; }
+    .carousel-dots { display: flex; gap: 6px; padding: 6px 0 12px; flex-shrink: 0; justify-content: center; }
+    .carousel-dot { width: 7px; height: 7px; border-radius: 50%; background: #e2e8f0; cursor: pointer; transition: all 0.2s; border: none; padding: 0; }
+    .carousel-dot:hover { background: #93c5fd; }
+    .carousel-dot.current { background: #2563eb; transform: scale(1.3); }
+    .carousel-dot.active-preset { background: #16a34a; }
+
+    /* ── Insights section (single page) ── */
+    .insights-section { display: flex; align-items: center; justify-content: center; background: #f8fafc; }
+    .insights-inner { max-width: 1100px; padding: 0 40px; width: 100%; }
+    .insights-inner h2 { font-size: 32px; font-weight: 700; color: #0f172a; text-align: center; margin-bottom: 6px; }
+    .insights-subtitle { font-size: 15px; color: #64748b; text-align: center; margin-bottom: 28px; }
+    .insights-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .insight-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 10px; }
+    .insight-card .ic-num { font-size: 12px; font-weight: 700; color: #2563eb; letter-spacing: 0.5px; }
+    .insight-card .ic-stat { font-size: 40px; font-weight: 800; line-height: 1; color: #0f172a; }
+    .insight-card .ic-title { font-size: 15px; font-weight: 700; color: #0f172a; line-height: 1.3; }
+    .insight-card .ic-desc { font-size: 13px; color: #475569; line-height: 1.6; }
+    .insight-card .ic-detail { font-size: 12px; color: #64748b; line-height: 1.5; border-top: 1px solid #f0f0f0; padding-top: 10px; margin-top: auto; }
+    .insight-card .ic-detail b { color: #0f172a; }
+
+    /* ── Limitations section ── */
+    .limitations-section { display: flex; align-items: center; justify-content: center; background: #0f172a; color: #94a3b8; }
+    .limitations-inner { max-width: 800px; padding: 0 40px; }
+    .limitations-inner h2 { font-size: 24px; font-weight: 600; color: #cbd5e1; margin-bottom: 24px; text-align: center; }
+    .lim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; }
+    .lim-item { display: flex; gap: 10px; align-items: flex-start; }
+    .lim-marker { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: #475569; margin-top: 7px; }
+    .lim-text { font-size: 13px; line-height: 1.6; }
+    .lim-text b { color: #cbd5e1; font-weight: 600; }
+    .limitations-inner .credits { margin-top: 36px; font-size: 12px; color: #475569; text-align: center; }
+
+    /* ── fullPage nav dots ── */
+    #fp-nav ul li a span { background: #94a3b8; }
+    #fp-nav ul li a.active span { background: #2563eb; }
+  </style>
+</head>
+<body>
+
+<div id="fullpage">
+
+  <!-- Section 1: Hero -->
+  <div class="section hero">
+    <h1>Stop <span>Gap</span></h1>
+    <p class="tagline">Mapping the barriers between sidewalks and transit access in Seattle</p>
+    <div class="scroll-hint">Scroll to explore</div>
+  </div>
+
+  <!-- Section 2: The Data -->
+  <div class="section data-section">
+    <div class="data-inner">
+      <div class="data-text">
+        <h2>The Problem</h2>
+        <p style="font-style:italic;color:#64748b;margin-bottom:16px;">As a frequent Metro rider, I've seen firsthand how the bus system works hard to be accessible — low-floor buses, audio announcements, wheelchair ramps. But none of that matters if you can't reach the stop.</p>
+        <p>Sidewalk barriers don't just affect pedestrians — they block access to public transit. A cracked sidewalk or missing curb ramp near a bus stop can make an entire route inaccessible.</p>
+        <p>We combined <b>crowdsourced sidewalk accessibility data</b> from Project Sidewalk with <b>King County Metro transit stop locations</b> to measure the real friction between where people walk and where buses stop.</p>
+      </div>
+      <div class="data-cards">
+        <div class="data-card">
+          <div class="dc-title">Accessibility Barriers</div>
+          <div class="dc-desc">Crowdsourced observations of sidewalk conditions</div>
+          <div class="dc-stat" id="stat-barriers">81,973</div>
+        </div>
+        <div class="data-card">
+          <div class="dc-title">Transit Stops Analyzed</div>
+          <div class="dc-desc">King County Metro bus stops with geo-matched barriers</div>
+          <div class="dc-stat" id="stat-stops">14,941</div>
+        </div>
+        <div class="data-card">
+          <div class="dc-title">Bus Routes Covered</div>
+          <div class="dc-desc">Routes assessed for accessibility friction</div>
+          <div class="dc-stat" id="stat-routes">209</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: How to Read -->
+  <div class="section how-to-section">
+    <div class="howto-inner">
+      <h2>How to Explore</h2>
+      <p class="howto-subtitle">A quick guide to the interactive dashboard on the next page</p>
+      <div class="howto-grid">
+        <div class="howto-card">
+          <div class="howto-icon">&#x1F5FA;</div>
+          <div class="howto-title">The Map</div>
+          <div class="howto-desc">Each dot is a transit stop. <b>Warmer colors = more barriers</b> nearby. Toggle between individual stops and a neighborhood summary view using the tabs.</div>
+        </div>
+        <div class="howto-card">
+          <div class="howto-icon">&#x1F50E;</div>
+          <div class="howto-title">Filters</div>
+          <div class="howto-desc"><b>Severity</b> sets the minimum barrier severity (1–5). <b>Min Barriers</b> hides stops below a threshold. <b>Route</b> and <b>Barrier Type</b> isolate specific subsets.</div>
+        </div>
+        <div class="howto-card">
+          <div class="howto-icon">&#x1F517;</div>
+          <div class="howto-title">Click to Filter</div>
+          <div class="howto-desc">Charts are interactive. <b>Click a bar</b> to filter by that route, or <b>click a donut slice</b> to filter by barrier type. Click again to clear. All panels update together.</div>
+        </div>
+        <div class="howto-card">
+          <div class="howto-icon">&#x1F4A1;</div>
+          <div class="howto-title">Friction Intensity</div>
+          <div class="howto-desc">Our key metric: <b>barriers per impacted stop</b>. A route with 10 barriers across 2 stops (5.0) is worse than 10 barriers across 10 stops (1.0). Used in the route chart and neighborhood ranking.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Dashboard -->
+  <div class="section dashboard-section">
+    <div class="dashboard-inner">
+      <div class="dash-header">
+        <h2>Interactive Explorer</h2>
+        <div class="filters">
+          <div class="filter-group">
+            <label>Min Severity:</label>
+            <input type="range" id="severitySlider" min="1" max="5" value="3" step="1">
+            <span class="value" id="severityValue">3</span>
+          </div>
+          <div class="filter-group">
+            <label>Min Barriers:</label>
+            <input type="range" id="barrierSlider" min="0" max="20" value="5" step="1">
+            <span class="value" id="barrierValue">5</span>
+          </div>
+          <div class="filter-group">
+            <label>Route:</label>
+            <select id="routeSelect">
+              <option value="">All Routes</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Barrier Type:</label>
+            <select id="barrierTypeSelect">
+              <option value="">All Types</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-body">
+        <div class="map-column">
+          <div class="panel">
+            <div class="tab-bar">
+              <div class="tab active" data-view="stops">Transit Stops</div>
+              <div class="tab" data-view="neighborhoods">Neighborhood Overview</div>
+            </div>
+            <div id="map"></div>
+            <div class="legend">
+              <span>Low barriers</span>
+              <div class="legend-gradient" id="mapLegend"></div>
+              <span>High barriers</span>
+              <span class="size-legend" id="sizeLegend" style="display:none;margin-left:16px;border-left:1px solid #ddd;padding-left:16px;">
+                <svg width="46" height="14" style="vertical-align:middle;">
+                  <circle cx="4" cy="7" r="3" fill="#ccc" stroke="#999" stroke-width="0.5"/>
+                  <circle cx="18" cy="7" r="5" fill="#ccc" stroke="#999" stroke-width="0.5"/>
+                  <circle cx="36" cy="7" r="7" fill="#ccc" stroke="#999" stroke-width="0.5"/>
+                </svg>
+                <span style="margin-left:4px;cursor:help;" title="Circle size represents the number of impacted transit stops in each neighborhood">Size = impacted stops</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-column">
+          <div class="kpis">
+            <div class="kpi"><div class="label">Total Stops</div><div class="number" id="kpi-total">—</div></div>
+            <div class="kpi"><div class="label">Impacted Stops</div><div class="number highlight" id="kpi-impacted">—</div></div>
+            <div class="kpi"><div class="label">Total Barriers</div><div class="number" id="kpi-barriers">—</div></div>
+            <div class="kpi"><div class="label">Neighborhoods</div><div class="number" id="kpi-neighborhoods">—</div></div>
+          </div>
+
+          <div class="chart-grid">
+            <div class="panel">
+              <div class="panel-title">Barrier Types</div>
+              <div class="chart-container" id="chart-barrier-types" style="display:flex;align-items:center;justify-content:center;"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">Top Routes by Friction/Stop</div>
+              <div class="chart-container" id="chart-friction-per-stop"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">Least Accessible Neighborhoods</div>
+              <div class="rank-list" id="neighborhood-ranking"></div>
+            </div>
+            <div class="panel">
+              <div class="carousel-wrapper">
+                <button class="ep-arrow" onclick="prevPreset()" title="Previous">&lsaquo;</button>
+                <div class="carousel-body" id="carousel-body"></div>
+                <button class="ep-arrow" onclick="nextPreset()" title="Next">&rsaquo;</button>
+              </div>
+              <div class="carousel-dots" id="carousel-dots"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 5: Insights (consolidated) -->
+  <div class="section insights-section">
+    <div class="insights-inner">
+      <h2>What the Data Reveals</h2>
+      <p class="insights-subtitle">Three findings that point to a clear path forward</p>
+      <div class="insights-grid">
+        <div class="insight-card">
+          <div class="ic-num">01 &mdash; The problem is concentrated</div>
+          <div class="ic-stat">271 stops</div>
+          <div class="ic-title">Just 8% of impacted stops hold 25% of all barriers city-wide.</div>
+          <div class="ic-desc">72% of Seattle's transit stops have at least one barrier nearby — but the damage isn't spread evenly. The worst stops cluster in a handful of neighborhoods: Industrial District, Roosevelt, and Wallingford alone account for nearly half. These stops also average 3.1 barrier types each (vs. 2.6 overall), meaning each fix addresses multiple problems at once. Targeting 271 stops would improve 52 bus routes.</div>
+          <div class="ic-detail"><b>Try it:</b> Set min barriers to 10+ in the dashboard. The dots thin out but cluster in the same corridors — this is structural, not random.</div>
+        </div>
+        <div class="insight-card">
+          <div class="ic-num">02 &mdash; Two problems, two budgets</div>
+          <div class="ic-stat">71% vs 21%</div>
+          <div class="ic-title">Severe barriers split into capital projects and maintenance — they need separate fix strategies.</div>
+          <div class="ic-desc">71% of severe barriers are missing infrastructure (NoSidewalk + NoCurbRamp, avg severity 3.9) — things that were never built and require new construction. 21% are degraded infrastructure (CurbRamp + SurfaceProblem, avg severity 3.3) — things that exist but need repair. Treating these as one problem misallocates resources: capital budgets for construction, maintenance crews for repair. The highest-severity barriers are overwhelmingly in the "never built" category.</div>
+          <div class="ic-detail"><b>Try it:</b> Toggle between NoCurbRamp and CurbRamp in the barrier type filter. Different neighborhoods light up — different infrastructure histories.</div>
+        </div>
+        <div class="insight-card">
+          <div class="ic-num">03 &mdash; Fewer routes, more barriers</div>
+          <div class="ic-stat">960 trapped</div>
+          <div class="ic-title">Stops with the fewest transit alternatives have 1.5x more barriers than well-connected hubs.</div>
+          <div class="ic-desc">960 stops have 5+ barriers and zero or one bus route — riders there have no alternative when a stop is inaccessible. Yesler Terrace, a public housing community, has 100% of its 37 stops impacted with 12 trapped. Industrial District has 177 trapped stops. Well-served hubs received better infrastructure investment; the places that need transit most were built last and maintained least.</div>
+          <div class="ic-detail"><b>Try it:</b> Filter Route 348 — the worst major route at 7.8 barriers/stop, entirely within Roosevelt. Then try Route 60 through Yesler Terrace.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: Limitations -->
+  <div class="section limitations-section">
+    <div class="limitations-inner">
+      <h2>Limitations &amp; Assumptions</h2>
+      <div class="lim-grid">
+        <div class="lim-item" style="grid-column: 1 / -1; background: rgba(255,255,255,0.06); border-radius: 8px; padding: 14px 16px;">
+          <div class="lim-marker" style="background: #f59e0b;"></div>
+          <div class="lim-text"><b>Proximity is approximate.</b> We match barriers within ~50 meters of a stop. This radius is arbitrary — it may include barriers not on the actual walking path to the stop, or miss critical ones just outside the boundary. A different radius would produce different barrier counts, neighborhood rankings, and route scores. All numbers in this analysis are sensitive to this threshold.</div>
+        </div>
+        <div class="lim-item">
+          <div class="lim-marker"></div>
+          <div class="lim-text"><b>Crowdsourced coverage bias.</b> Project Sidewalk depends on volunteer labeling. Some neighborhoods may be over-surveyed while others have gaps, skewing where barriers appear.</div>
+        </div>
+        <div class="lim-item">
+          <div class="lim-marker"></div>
+          <div class="lim-text"><b>Point-in-time snapshot.</b> Barrier observations have no timestamp in our dataset. Some may already be fixed; new ones may have appeared since data collection.</div>
+        </div>
+        <div class="lim-item">
+          <div class="lim-marker"></div>
+          <div class="lim-text"><b>No ridership weighting.</b> A barrier at a stop serving 10,000 daily riders has more real-world impact than one serving 50, but we treat all stops equally.</div>
+        </div>
+        <div class="lim-item">
+          <div class="lim-marker"></div>
+          <div class="lim-text"><b>Severity is subjective.</b> Barrier severity is rated by individual volunteers. The same obstacle may receive different scores from different observers.</div>
+        </div>
+        <div class="lim-item">
+          <div class="lim-marker"></div>
+          <div class="lim-text"><b>Partial route coverage.</b> Many King County Metro routes extend beyond Seattle's city limits where Project Sidewalk has no data. Route-level metrics only reflect the Seattle portion, not the full line.</div>
+        </div>
+        <div class="lim-item">
+          <div class="lim-marker"></div>
+          <div class="lim-text"><b>No demographic overlay.</b> We flag equity concerns at Yesler Terrace, but lack income, disability, and age data to systematically quantify who is most affected.</div>
+        </div>
+      </div>
+      <div class="credits">
+        Wei Jun Tan<br>
+        Built with Project Sidewalk Seattle data + King County Metro GTFS data<br>
+        DubsTech Datathon 2026
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// State
+let stopsData = [];
+let map, stopsLayer, neighborhoodsLayer;
+let currentView = 'stops';
+let severityThreshold = 3;
+let minBarrierCount = 5;
+let selectedRoute = '';
+let selectedBarrierType = '';
+let mapInitialized = false;
+
+// Color scales
+const stopColorScale = d3.scaleSequential(d3.interpolateYlOrRd).domain([0, 15]);
+const neighborhoodColorScale = d3.scaleSequential(d3.interpolateYlOrRd).domain([0, 8]);
+
+// Init map
+function initMap() {
+  if (mapInitialized) return;
+  mapInitialized = true;
+
+  map = L.map('map', { zoomControl: true }).setView([47.6, -122.33], 11);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OSM &copy; CARTO',
+    maxZoom: 19
+  }).addTo(map);
+
+  stopsLayer = L.layerGroup().addTo(map);
+  neighborhoodsLayer = L.layerGroup();
+
+  // Reset view button
+  const resetControl = L.control({ position: 'topleft' });
+  resetControl.onAdd = function() {
+    const btn = L.DomUtil.create('div', 'leaflet-bar');
+    btn.innerHTML = '<a href="#" title="Reset view" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;font-size:16px;text-decoration:none;color:#333;background:#fff;">&#8962;</a>';
+    btn.onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      map.setView([47.62, -122.33], 11);
+      return false;
+    };
+    L.DomEvent.disableClickPropagation(btn);
+    return btn;
+  };
+  resetControl.addTo(map);
+
+  const legendEl = document.getElementById('mapLegend');
+  const colors = d3.range(0, 1.01, 0.05).map(t => d3.interpolateYlOrRd(t));
+  legendEl.style.background = `linear-gradient(to right, ${colors.join(', ')})`;
+}
+
+function matchesRouteFilter(stop) {
+  if (!selectedRoute) return true;
+  return stop.routes.includes(selectedRoute);
+}
+
+function matchesBarrierTypeFilter(stop) {
+  if (!selectedBarrierType) return true;
+  return stop.barrier_types.includes(selectedBarrierType);
+}
+
+function matchesFilters(stop) {
+  return matchesRouteFilter(stop) && matchesBarrierTypeFilter(stop);
+}
+
+function getStopBarriers(stop) {
+  let count = 0;
+  for (const [sev, c] of Object.entries(stop.severity)) {
+    if (parseInt(sev) >= severityThreshold) count += c;
+  }
+  return count;
+}
+
+function renderStopsMap() {
+  stopsLayer.clearLayers();
+  const maxBarriers = d3.max(stopsData, d => getStopBarriers(d)) || 1;
+  stopColorScale.domain([0, Math.min(maxBarriers, 20)]);
+
+  for (const s of stopsData) {
+    if (!s.neighborhood) continue;
+    if (!matchesFilters(s)) continue;
+    const bc = getStopBarriers(s);
+    if (bc < minBarrierCount) continue;
+
+    const circle = L.circleMarker([s.lat, s.lon], {
+      radius: 4,
+      fillColor: stopColorScale(bc),
+      color: '#000',
+      weight: 0.5,
+      fillOpacity: 0.5
+    });
+
+    circle.bindTooltip(`
+      <b>${s.name || 'Stop ' + s.id}</b><br>
+      Stop ID: ${s.id}<br>
+      Barriers: <b>${bc}</b><br>
+      Types: ${s.barrier_types.join(', ') || 'None'}<br>
+      Routes: ${s.routes.join(', ') || 'N/A'}<br>
+      Neighborhood: ${s.neighborhood || 'Unknown'}
+    `, { sticky: true });
+    stopsLayer.addLayer(circle);
+  }
+}
+
+function renderNeighborhoodsMap() {
+  neighborhoodsLayer.clearLayers();
+  const filtered = computeNeighborhoods();
+  const maxFriction = d3.max(filtered, d => d.friction_intensity) || 1;
+  neighborhoodColorScale.domain([0, maxFriction]);
+
+  for (const n of filtered) {
+    const circle = L.circleMarker([n.lat, n.lon], {
+      radius: Math.max(5, Math.min(Math.sqrt(n.impacted_stops) * 2, 18)),
+      fillColor: neighborhoodColorScale(n.friction_intensity),
+      color: '#fff',
+      weight: 1,
+      fillOpacity: 0.7
+    });
+
+    circle.bindTooltip(`
+      <b>${n.name}</b><br>
+      Impacted Stops: ${n.impacted_stops}<br>
+      Total Barriers: ${n.total_barriers}<br>
+      Friction Intensity: <b>${n.friction_intensity}</b>
+    `, { sticky: true });
+    neighborhoodsLayer.addLayer(circle);
+  }
+}
+
+function computeNeighborhoods() {
+  const nbh = {};
+  for (const s of stopsData) {
+    if (!s.neighborhood) continue;
+    if (!matchesFilters(s)) continue;
+    const bc = getStopBarriers(s);
+    if (bc < minBarrierCount) continue;
+    if (!nbh[s.neighborhood]) nbh[s.neighborhood] = { lat_sum: 0, lon_sum: 0, count: 0, barriers: 0, stops: 0 };
+    const n = nbh[s.neighborhood];
+    n.lat_sum += s.lat;
+    n.lon_sum += s.lon;
+    n.count++;
+    n.barriers += bc;
+    n.stops++;
+  }
+  return Object.entries(nbh).map(([name, n]) => ({
+    name,
+    lat: n.lat_sum / n.count,
+    lon: n.lon_sum / n.count,
+    impacted_stops: n.stops,
+    total_barriers: n.barriers,
+    friction_intensity: Math.round(n.barriers / n.stops * 10) / 10
+  })).sort((a, b) => b.friction_intensity - a.friction_intensity);
+}
+
+function computeRoutes() {
+  const routeMap = {};
+  for (const s of stopsData) {
+    if (!s.neighborhood) continue;
+    if (!matchesFilters(s)) continue;
+    const bc = getStopBarriers(s);
+    if (bc < minBarrierCount) continue;
+    for (const route of s.routes) {
+      if (!routeMap[route]) routeMap[route] = { total_friction: 0, impacted_stops: 0 };
+      routeMap[route].total_friction += bc;
+      routeMap[route].impacted_stops++;
+    }
+  }
+  return Object.entries(routeMap).map(([route, r]) => ({
+    route,
+    total_friction: r.total_friction,
+    impacted_stops: r.impacted_stops,
+    friction_per_stop: Math.round(r.total_friction / r.impacted_stops * 100) / 100
+  }));
+}
+
+function computeBarrierTypes() {
+  const types = {};
+  for (const s of stopsData) {
+    if (!s.neighborhood) continue;
+    // Skip barrier type filter here so the donut doesn't filter itself
+    if (!matchesRouteFilter(s)) continue;
+    const bc = getStopBarriers(s);
+    if (bc < minBarrierCount) continue;
+    for (const t of s.barrier_types) {
+      types[t] = (types[t] || 0) + 1;
+    }
+  }
+  return Object.entries(types).map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+const typeColors = {
+  CurbRamp: '#2563eb',
+  NoCurbRamp: '#dc2626',
+  SurfaceProblem: '#f59e0b',
+  Obstacle: '#8b5cf6',
+  NoSidewalk: '#06b6d4',
+  Other: '#94a3b8'
+};
+
+function renderDonutChart() {
+  const container = document.getElementById('chart-barrier-types');
+  container.innerHTML = '';
+
+  const data = computeBarrierTypes();
+  if (data.length === 0) {
+    container.innerHTML = '<div style="color:#999;font-size:13px;">No data</div>';
+    return;
+  }
+
+  const cw = container.clientWidth;
+  const ch = container.clientHeight;
+  const legendHeight = data.length * 16;
+  const size = Math.max(60, Math.min(ch * 0.7, cw * 0.4));
+  const radius = size / 2;
+  const inner = radius * 0.55;
+
+  const svg = d3.select('#chart-barrier-types').append('svg')
+    .attr('width', cw)
+    .attr('height', ch)
+    .style('max-width', '100%');
+
+  const legendEstWidth = 100;
+  const cx = (cw - legendEstWidth) / 2;
+  const g = svg.append('g')
+    .attr('transform', `translate(${cx},${ch / 2})`);
+
+  const pie = d3.pie().value(d => d.count).sort(null);
+  const arc = d3.arc().innerRadius(inner).outerRadius(radius - 2);
+
+  const total = d3.sum(data, d => d.count);
+
+  g.selectAll('path')
+    .data(pie(data))
+    .join('path')
+    .attr('d', arc)
+    .attr('fill', d => typeColors[d.data.name] || '#94a3b8')
+    .attr('stroke', d => selectedBarrierType === d.data.name ? '#0f172a' : '#fff')
+    .attr('stroke-width', d => selectedBarrierType === d.data.name ? 2.5 : 1.5)
+    .attr('opacity', d => !selectedBarrierType ? 0.7 : selectedBarrierType === d.data.name ? 1 : 0.3)
+    .style('cursor', 'pointer')
+    .on('click', (event, d) => {
+      const type = d.data.name;
+      selectedBarrierType = selectedBarrierType === type ? '' : type;
+      document.getElementById('barrierTypeSelect').value = selectedBarrierType;
+      onManualFilterChange();
+      render();
+    });
+
+  // Legend to the right of the donut, vertically centered
+  const legendX = cx + radius + 10;
+  const legendY = (ch - legendHeight) / 2;
+  const legend = svg.append('g')
+    .attr('transform', `translate(${legendX}, ${legendY})`);
+
+  data.forEach((d, i) => {
+    const row = legend.append('g').attr('transform', `translate(0, ${i * 16})`)
+      .style('cursor', 'pointer')
+      .on('click', () => {
+        selectedBarrierType = selectedBarrierType === d.name ? '' : d.name;
+        document.getElementById('barrierTypeSelect').value = selectedBarrierType;
+        onManualFilterChange();
+        render();
+      });
+    row.append('rect').attr('width', 8).attr('height', 8).attr('rx', 2)
+      .attr('fill', typeColors[d.name] || '#94a3b8')
+      .attr('opacity', !selectedBarrierType ? 0.7 : selectedBarrierType === d.name ? 1 : 0.3);
+    row.append('text').attr('x', 12).attr('y', 8).attr('font-size', '11px')
+      .attr('fill', !selectedBarrierType || selectedBarrierType === d.name ? '#444' : '#aaa')
+      .attr('font-weight', selectedBarrierType === d.name ? '600' : '400')
+      .text(`${d.name} (${Math.round(d.count / total * 100)}%)`);
+  });
+}
+
+function renderNeighborhoodRanking() {
+  const container = document.getElementById('neighborhood-ranking');
+  const nbh = {};
+  for (const s of stopsData) {
+    if (!s.neighborhood) continue;
+    if (!matchesFilters(s)) continue;
+    const bc = getStopBarriers(s);
+    if (bc < minBarrierCount) continue;
+    if (!nbh[s.neighborhood]) nbh[s.neighborhood] = { barriers: 0, stops: 0 };
+    nbh[s.neighborhood].barriers += bc;
+    nbh[s.neighborhood].stops++;
+  }
+  const sorted = Object.entries(nbh)
+    .map(([name, n]) => ({ name, friction: Math.round(n.barriers / n.stops * 10) / 10, barriers: n.barriers, stops: n.stops }))
+    .sort((a, b) => b.friction - a.friction);
+
+  if (sorted.length === 0) {
+    container.innerHTML = '<div style="color:#999;font-size:13px;padding:12px;">No data</div>';
+    return;
+  }
+
+  container.innerHTML = sorted.map((n, i) =>
+    `<div class="rank-item">
+      <div class="rank-num">${i + 1}</div>
+      <div class="rank-info">
+        <div class="rank-name">${n.name}</div>
+        <div class="rank-stats"><b>${n.friction}</b> barriers/stop · ${n.stops} stops · ${n.barriers} barriers</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+// ── Guided Explorations (presets) ──
+const presets = [
+  {
+    id: 'missing-ramps',
+    icon: '\u267F',
+    title: 'Missing Ramps',
+    stat: '79%',
+    desc: 'of Route 49 stops lack curb ramps entirely',
+    filters: { severity: 4, minBarriers: 1, route: '', barrierType: 'NoCurbRamp' },
+    btnLabel: 'Explore'
+  },
+  {
+    id: 'no-sidewalks',
+    icon: '\u26D4',
+    title: 'No Sidewalks',
+    stat: 'Rt 132',
+    desc: '75% of stops have zero sidewalk path',
+    filters: { severity: 3, minBarriers: 1, route: '132', barrierType: 'NoSidewalk' },
+    btnLabel: 'Explore'
+  },
+  {
+    id: 'severity-5',
+    icon: '\uD83D\uDD34',
+    title: 'Critical Only',
+    stat: '727',
+    desc: 'stops with most severe barriers\u2014emergency fixes',
+    filters: { severity: 5, minBarriers: 1, route: '', barrierType: '' },
+    btnLabel: 'Explore'
+  },
+  {
+    id: 'route-348',
+    icon: '\uD83D\uDE8C',
+    title: 'Route 348',
+    stat: '7.8/stop',
+    desc: 'Worst major route, entirely in Roosevelt',
+    filters: { severity: 3, minBarriers: 0, route: '348', barrierType: '' },
+    btnLabel: 'Explore'
+  },
+  {
+    id: 'yesler-equity',
+    icon: '\uD83C\uDFE0',
+    title: 'Yesler Terrace',
+    stat: '100%',
+    desc: 'of public housing stops have barriers',
+    filters: { severity: 3, minBarriers: 1, route: '60', barrierType: '' },
+    btnLabel: 'Explore'
+  },
+  {
+    id: 'trapped-stops',
+    icon: '\uD83D\uDCCD',
+    title: 'Trapped Stops',
+    stat: '143',
+    desc: 'stops with 8+ barriers and minimal routes',
+    filters: { severity: 3, minBarriers: 8, route: '', barrierType: '' },
+    btnLabel: 'Explore'
+  },
+  {
+    id: 'industrial',
+    icon: '\uD83C\uDFED',
+    title: 'Industrial District',
+    stat: '2,401',
+    desc: 'barriers across 505 stops\u2014most in city',
+    filters: { severity: 3, minBarriers: 3, route: '131', barrierType: '' },
+    btnLabel: 'Explore'
+  }
+];
+
+let activePreset = null;
+let carouselIndex = 0;
+
+function renderCarousel() {
+  const p = presets[carouselIndex];
+  const isActive = activePreset === p.id;
+
+  // Card
+  document.getElementById('carousel-body').innerHTML = `
+    <div class="carousel-card${isActive ? ' is-active' : ''}">
+      <div class="cc-icon">${p.icon}</div>
+      <div class="cc-title">${p.title}</div>
+      <div class="cc-stat">${p.stat}</div>
+      <div class="cc-desc">${p.desc}</div>
+      <button class="cc-apply${isActive ? ' applied' : ''}" onclick="${isActive ? 'clearPreset()' : `applyPreset('${p.id}')`}">
+        ${isActive ? '\u2715  Clear filters' : '\u25B6  Apply filters'}
+      </button>
+    </div>
+  `;
+
+  // Dots
+  document.getElementById('carousel-dots').innerHTML = presets.map((pr, i) => {
+    let cls = 'carousel-dot';
+    if (i === carouselIndex) cls += ' current';
+    if (activePreset === pr.id) cls += ' active-preset';
+    return `<button class="${cls}" onclick="goToPreset(${i})" title="${pr.title}"></button>`;
+  }).join('');
+}
+
+function prevPreset() {
+  carouselIndex = (carouselIndex - 1 + presets.length) % presets.length;
+  renderCarousel();
+}
+
+function nextPreset() {
+  carouselIndex = (carouselIndex + 1) % presets.length;
+  renderCarousel();
+}
+
+function goToPreset(i) {
+  carouselIndex = i;
+  renderCarousel();
+}
+
+function applyFilters(f) {
+  severityThreshold = f.severity;
+  document.getElementById('severitySlider').value = f.severity;
+  document.getElementById('severityValue').textContent = f.severity;
+
+  minBarrierCount = f.minBarriers;
+  document.getElementById('barrierSlider').value = f.minBarriers;
+  document.getElementById('barrierValue').textContent = f.minBarriers;
+
+  selectedRoute = f.route;
+  document.getElementById('routeSelect').value = f.route;
+
+  selectedBarrierType = f.barrierType;
+  document.getElementById('barrierTypeSelect').value = f.barrierType;
+}
+
+function applyPreset(id) {
+  const preset = presets.find(p => p.id === id);
+  if (!preset) return;
+  activePreset = id;
+  applyFilters(preset.filters);
+  renderCarousel();
+  render();
+}
+
+function clearPreset() {
+  activePreset = null;
+  applyFilters({ severity: 3, minBarriers: 5, route: '', barrierType: '' });
+  renderCarousel();
+  render();
+}
+
+const chartState = {};
+
+function renderBarChart(containerId, data, valueKey, color, topN = 10, onClick = null, selectedKey = '') {
+  const container = document.getElementById(containerId);
+  const sorted = [...data].sort((a, b) => b[valueKey] - a[valueKey]).slice(0, topN);
+  const dur = 400;
+
+  const margin = { top: 8, right: 12, bottom: 24, left: 48 };
+  const cw = container.clientWidth;
+  const ch = container.clientHeight;
+  const width = Math.max(80, (cw > 0 ? cw : 250) - margin.left - margin.right);
+  const height = Math.max(60, (ch > 0 ? ch : 200) - margin.top - margin.bottom);
+
+  // Create SVG once, reuse on updates
+  if (!chartState[containerId]) {
+    container.innerHTML = '';
+    const svg = d3.select(`#${containerId}`).append('svg')
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom)
+      .style('display', 'block')
+      .style('max-width', '100%');
+
+    const g = svg.append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    g.append('g').attr('class', 'x-axis').attr('transform', `translate(0,${height})`);
+    g.append('g').attr('class', 'y-axis');
+    g.append('g').attr('class', 'bars');
+
+    chartState[containerId] = { svg, g, width, height };
+  }
+
+  const { g } = chartState[containerId];
+
+  const x = d3.scaleLinear()
+    .domain([0, sorted.length > 0 ? d3.max(sorted, d => d[valueKey]) * 1.1 : 1])
+    .nice()
+    .range([0, width]);
+
+  const y = d3.scaleBand()
+    .domain(sorted.map(d => d.route))
+    .range([0, height])
+    .padding(0.15);
+
+  // Update x-axis
+  g.select('.x-axis')
+    .transition().duration(dur)
+    .call(d3.axisBottom(x).ticks(4).tickSize(-height).tickFormat(d => {
+      if (d >= 1000) return d3.format('.1s')(d);
+      if (Number.isInteger(d)) return d;
+      return d3.format('.1f')(d);
+    }))
+    .call(g => g.select('.domain').remove())
+    .call(g => g.selectAll('.tick line').attr('stroke', '#e0e0e0').attr('stroke-dasharray', '2,2'))
+    .call(g => g.selectAll('.tick text').attr('fill', '#888').attr('font-size', '12px'));
+
+  // Update y-axis
+  g.select('.y-axis')
+    .transition().duration(dur)
+    .call(d3.axisLeft(y).tickSize(0))
+    .call(g => g.select('.domain').remove())
+    .call(g => g.selectAll('.tick text')
+      .attr('fill', d => !selectedKey || selectedKey === d ? '#444' : '#aaa')
+      .attr('font-weight', d => selectedKey === d ? '600' : '400')
+      .attr('font-size', '12px'));
+
+  // Click handlers on y-axis labels (must bind on selection, not transition)
+  if (onClick) {
+    g.select('.y-axis').selectAll('.tick text')
+      .style('cursor', 'pointer')
+      .on('click', (event, d) => onClick(d));
+  }
+
+  // Bars: enter/update/exit
+  g.select('.bars').selectAll('rect')
+    .data(sorted, d => d.route)
+    .join(
+      enter => enter.append('rect')
+        .attr('x', 0)
+        .attr('y', d => y(d.route))
+        .attr('width', 0)
+        .attr('height', y.bandwidth())
+        .attr('fill', color)
+        .attr('rx', 3)
+        .attr('opacity', 0)
+        .style('cursor', onClick ? 'pointer' : 'default')
+        .call(el => { if (onClick) el.on('click', (event, d) => onClick(d.route)); })
+        .call(el => el.transition().duration(dur)
+          .attr('width', d => x(d[valueKey]))
+          .attr('opacity', d => !selectedKey ? 0.7 : selectedKey === d.route ? 1 : 0.2)),
+      update => update
+        .call(el => { if (onClick) el.on('click', (event, d) => onClick(d.route)); })
+        .call(el => el.transition().duration(dur)
+          .attr('y', d => y(d.route))
+          .attr('width', d => x(d[valueKey]))
+          .attr('height', y.bandwidth())
+          .attr('opacity', d => !selectedKey ? 0.7 : selectedKey === d.route ? 1 : 0.2)),
+      exit => exit
+        .call(el => el.transition().duration(dur)
+          .attr('width', 0)
+          .attr('opacity', 0)
+          .remove())
+    );
+
+}
+
+function updateKPIs() {
+  let totalStops = 0;
+  let impactedStops = 0;
+  let totalBarriers = 0;
+  const nbhSet = new Set();
+
+  for (const s of stopsData) {
+    if (!s.neighborhood) continue;
+    if (!matchesFilters(s)) continue;
+    totalStops++;
+    const bc = getStopBarriers(s);
+    if (bc >= minBarrierCount) {
+      impactedStops++;
+      totalBarriers += bc;
+      nbhSet.add(s.neighborhood);
+    }
+  }
+
+  document.getElementById('kpi-total').textContent = totalStops.toLocaleString();
+  document.getElementById('kpi-impacted').textContent = impactedStops.toLocaleString();
+  document.getElementById('kpi-barriers').textContent = totalBarriers.toLocaleString();
+  document.getElementById('kpi-neighborhoods').textContent = nbhSet.size;
+}
+
+
+function render() {
+  updateKPIs();
+
+  if (currentView === 'stops') {
+    renderStopsMap();
+  } else {
+    renderNeighborhoodsMap();
+  }
+
+  const routes = computeRoutes();
+  const routeClick = (route) => {
+    selectedRoute = selectedRoute === route ? '' : route;
+    document.getElementById('routeSelect').value = selectedRoute;
+    onManualFilterChange();
+    render();
+  };
+  renderBarChart('chart-friction-per-stop', routes, 'friction_per_stop', 'steelblue', 5, routeClick, selectedRoute);
+  renderDonutChart();
+
+  renderNeighborhoodRanking();
+  renderCarousel();
+}
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentView = tab.dataset.view;
+
+    if (currentView === 'stops') {
+      map.removeLayer(neighborhoodsLayer);
+      stopsLayer.addTo(map);
+      renderStopsMap();
+      document.getElementById('sizeLegend').style.display = 'none';
+    } else {
+      map.removeLayer(stopsLayer);
+      neighborhoodsLayer.addTo(map);
+      renderNeighborhoodsMap();
+      document.getElementById('sizeLegend').style.display = 'inline';
+    }
+  });
+});
+
+// Prevent fullPage.js from hijacking scroll inside scrollable panels
+document.getElementById('neighborhood-ranking').addEventListener('wheel', function(e) {
+  const el = this;
+  const atTop = el.scrollTop === 0 && e.deltaY < 0;
+  const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight && e.deltaY > 0;
+  if (!atTop && !atBottom) {
+    e.stopPropagation();
+  }
+}, { passive: false });
+
+// Scroll on carousel navigates one card per scroll gesture
+let carouselScrollCooldown = false;
+document.querySelector('.carousel-wrapper').addEventListener('wheel', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (carouselScrollCooldown) return;
+  carouselScrollCooldown = true;
+  const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+  if (delta > 0) nextPreset(); else if (delta < 0) prevPreset();
+  setTimeout(() => { carouselScrollCooldown = false; }, 400);
+}, { passive: false });
+
+
+// Debounced render
+let renderTimeout;
+function debouncedRender() {
+  clearTimeout(renderTimeout);
+  renderTimeout = setTimeout(render, 150);
+}
+
+// Clear active preset when user manually changes filters
+function onManualFilterChange() {
+  if (activePreset) {
+    activePreset = null;
+    renderCarousel();
+  }
+}
+
+// Filter controls
+document.getElementById('severitySlider').addEventListener('input', e => {
+  severityThreshold = parseInt(e.target.value);
+  document.getElementById('severityValue').textContent = severityThreshold;
+  onManualFilterChange();
+  debouncedRender();
+});
+
+document.getElementById('barrierSlider').addEventListener('input', e => {
+  minBarrierCount = parseInt(e.target.value);
+  document.getElementById('barrierValue').textContent = minBarrierCount;
+  onManualFilterChange();
+  debouncedRender();
+});
+
+document.getElementById('routeSelect').addEventListener('change', e => {
+  selectedRoute = e.target.value;
+  onManualFilterChange();
+  render();
+});
+
+document.getElementById('barrierTypeSelect').addEventListener('change', e => {
+  selectedBarrierType = e.target.value;
+  onManualFilterChange();
+  render();
+});
+
+// Load data and start
+async function init() {
+  const [stops] = await Promise.all([
+    fetch('data/stops.json').then(r => r.json()),
+  ]);
+  stopsData = stops;
+
+  // Populate route dropdown
+  const allRoutes = new Set();
+  for (const s of stopsData) {
+    if (!s.neighborhood) continue;
+    for (const r of s.routes) allRoutes.add(r);
+  }
+  const routeSelect = document.getElementById('routeSelect');
+  const sortedRoutes = [...allRoutes].sort((a, b) => {
+    const na = parseInt(a), nb = parseInt(b);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.localeCompare(b);
+  });
+  for (const r of sortedRoutes) {
+    const opt = document.createElement('option');
+    opt.value = r;
+    opt.textContent = r;
+    routeSelect.appendChild(opt);
+  }
+
+  // Populate barrier type dropdown
+  const allBarrierTypes = new Set();
+  for (const s of stopsData) {
+    for (const t of s.barrier_types) allBarrierTypes.add(t);
+  }
+  const barrierTypeSelect = document.getElementById('barrierTypeSelect');
+  for (const t of [...allBarrierTypes].sort()) {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    barrierTypeSelect.appendChild(opt);
+  }
+
+  // Init fullPage.js
+  let fpScrolling = false;
+  new fullpage('#fullpage', {
+    autoScrolling: true,
+    navigation: true,
+    navigationPosition: 'right',
+    scrollOverflow: false,
+    onLeave: function(origin, destination, direction) {
+      if (fpScrolling) return false;
+      fpScrolling = true;
+      setTimeout(() => { fpScrolling = false; }, 800);
+    },
+    afterLoad: function(origin, destination) {
+      // Init map when dashboard section is reached
+      if (destination.index === 3) {
+        initMap();
+        setTimeout(() => {
+          map.invalidateSize();
+          map.setView([47.62, -122.33], 11);
+          // Clear cached chart SVGs so they remeasure container dimensions
+          Object.keys(chartState).forEach(k => {
+            const el = document.getElementById(k);
+            if (el) el.innerHTML = '';
+            delete chartState[k];
+          });
+          render();
+        }, 300);
+      }
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>
